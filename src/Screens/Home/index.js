@@ -8,11 +8,12 @@ import {
   ImageBackground,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {heightRatio, widthRatio} from '../../Components/screenSize';
 import AntDesign from '../../Components/VectorIcons';
-
+import Toast from 'react-native-toast-message';
 const MyComponent = () => {
   const [quoteData, setQuoteData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,15 +48,30 @@ const MyComponent = () => {
     if (quoteData) {
       const savedQuotesString = await AsyncStorage.getItem('savedQuotes');
       let savedQuotes = [];
-      console.log(savedQuotesString);
       if (savedQuotesString) {
         savedQuotes = JSON.parse(savedQuotesString);
       }
+      const quoteExists = savedQuotes.some(
+        quote => quote[0].q === quoteData[0].q,
+      );
+      if (quoteExists) {
+        showToast('Quote already exists!');
+        return;
+      }
+
       savedQuotes.push(quoteData);
       const updatedQuotesString = JSON.stringify(savedQuotes);
       await AsyncStorage.setItem('savedQuotes', updatedQuotesString);
+      showToast('Quote saved successfully!');
     }
   };
+  const showToast = message => {
+    Toast.show({
+      type: 'success',
+      text1: message,
+    });
+  };
+
   return (
     <View>
       <Image
@@ -66,7 +82,13 @@ const MyComponent = () => {
           position: 'absolute',
         }}
       />
-      {isLoading && <Text>Loading quote...</Text>}
+      {isLoading && (
+        <ActivityIndicator
+          size="large"
+          color="black"
+          style={{height: heightRatio(80), alignContent: 'center'}}
+        />
+      )}
       {error && <Text>Error: {error}</Text>}
       {quoteData != null && (
         <View style={styles.savedQuoteContainer}>
@@ -92,6 +114,7 @@ const MyComponent = () => {
           </View>
         </View>
       )}
+      <Toast ref={ref => Toast.setRef(ref)} />
     </View>
   );
 };
@@ -99,7 +122,7 @@ const MyComponent = () => {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    resizeMode: 'cover', // Adjust as needed (e.g., 'contain', 'stretch')
+    resizeMode: 'cover',
   },
   savedQuoteContainer: {
     alignSelf: 'center',

@@ -1,9 +1,8 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
   Share,
-  Button,
   StyleSheet,
   TouchableOpacity,
   FlatList,
@@ -11,27 +10,35 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AntDesign from '../../Components/VectorIcons';
 import LinearGradient from 'react-native-linear-gradient';
+import {useFocusEffect} from '@react-navigation/native';
 
 const SavedQuote = () => {
   const [savedQuotes, setSavedQuotes] = useState([]);
-  useEffect(() => {
-    const retrieveSavedQuotes = async () => {
-      try {
-        const savedQuotesString = await AsyncStorage.getItem('savedQuotes');
-        console.log('~~~`>', savedQuotesString);
-        if (savedQuotesString) {
-          const parsedQuotes = JSON.parse(savedQuotesString);
-          setSavedQuotes(parsedQuotes);
-        } else {
-          setSavedQuotes([]);
-        }
-      } catch (error) {
-        console.error('Error retrieving saved quotes:', error);
-      }
-    };
 
+  const retrieveSavedQuotes = async () => {
+    try {
+      const savedQuotesString = await AsyncStorage.getItem('savedQuotes');
+      // console.log('~~~>', savedQuotesString);
+      if (savedQuotesString) {
+        const parsedQuotes = JSON.parse(savedQuotesString);
+        setSavedQuotes(parsedQuotes);
+      } else {
+        setSavedQuotes([]);
+      }
+    } catch (error) {
+      console.error('Error retrieving saved quotes:', error);
+    }
+  };
+
+  useEffect(() => {
     retrieveSavedQuotes();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      retrieveSavedQuotes();
+    }, []),
+  );
 
   const onShare = async quote => {
     const message = `*Quote of the Day* \n"${quote[0].q}" \n - _${quote[0].a}_`;
@@ -59,7 +66,11 @@ const SavedQuote = () => {
                 <Text style={styles.savedQuoteAuthor}>- {item[0].a}</Text>
                 <TouchableOpacity
                   onPress={() => onShare(item)}
-                  style={{width: 25}}>
+                  style={{
+                    flexDirection: 'row-reverse',
+                    alignContent: 'flex-end',
+                    right: 10,
+                  }}>
                   <AntDesign nameIcon={'sharealt'} />
                 </TouchableOpacity>
               </View>
